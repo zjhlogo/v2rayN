@@ -214,10 +214,12 @@ namespace v2rayN
             try
             {
                 plainText = plainText.TrimEx()
-                  .Replace(Environment.NewLine, "")
-                  .Replace("\n", "")
-                  .Replace("\r", "")
-                  .Replace(" ", "");
+                    .Replace('-', '+')
+                    .Replace('_', '/')
+                    .Replace(Environment.NewLine, "")
+                    .Replace("\n", "")
+                    .Replace("\r", "")
+                    .Replace(" ", "");
 
                 if (plainText.Length % 4 > 0)
                 {

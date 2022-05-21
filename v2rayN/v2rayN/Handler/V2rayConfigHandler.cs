@@ -1386,6 +1386,22 @@ namespace v2rayN.Handler
 
                     vmessItem.configType = (int)EConfigType.Shadowsocks;
                 }
+                else if (result.StartsWith(Global.ssrProtocol))
+                {
+                    msg = UIRes.I18N("ConfigurationFormatIncorrect");
+
+                    vmessItem = ResolveSSRIntoSS(result);
+                    if (vmessItem == null)
+                    {
+                        return null;
+                    }
+                    if (vmessItem.address.Length == 0 || vmessItem.port == 0 || vmessItem.security.Length == 0 || vmessItem.id.Length == 0)
+                    {
+                        return null;
+                    }
+
+                    vmessItem.configType = (int)EConfigType.Shadowsocks;
+                }
                 else if (result.StartsWith(Global.socksProtocol))
                 {
                     msg = UIRes.I18N("ConfigurationFormatIncorrect");
@@ -1613,6 +1629,41 @@ namespace v2rayN.Handler
             server.id = details.Groups["password"].Value;
             server.address = details.Groups["hostname"].Value;
             server.port = int.Parse(details.Groups["port"].Value);
+            return server;
+        }
+
+        private static VmessItem ResolveSSRIntoSS(string result)
+        {
+            var base64Content = result.Substring(Global.ssrProtocol.Length);
+            if (base64Content.IsNullOrEmpty()) return null;
+
+            var content = Utils.Base64Decode(base64Content);
+            if (content.IsNullOrEmpty()) return null;
+
+            var items = content.Split(new string[] { ":", "/?" }, StringSplitOptions.None);
+            if (items.Length != 7) return null;
+
+            var paramsMap = items[6].Split(new string[] { "&" }, StringSplitOptions.RemoveEmptyEntries);
+
+            string remark = "";
+            for (int i = 0; i < paramsMap.Length; i++)
+            {
+                var kvp = paramsMap[i].Split(new string[] {"="}, StringSplitOptions.None);
+                if (kvp.Length != 2) continue;
+
+                if (kvp[0] == "remarks")
+                {
+                    remark = Utils.Base64Decode(kvp[1]);
+                    break;
+                }
+            }
+
+            VmessItem server = new VmessItem();
+            server.remarks = remark;
+            server.security = items[3];;
+            server.id = Utils.Base64Decode(items[5]);
+            server.address = items[0];
+            server.port = int.Parse(items[1]);
             return server;
         }
 
